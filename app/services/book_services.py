@@ -1,84 +1,63 @@
-# from sqlalchemy.orm import Session
-# from app.models.books_model import Book
-# from fastapi import HTTPException, status
-
-# def create_book(book, db: Session):
-#     try:
-#         db_book = Book(**book.dict())
-#         db.add(db_book)
-#         db.commit()
-#         db.refresh(db_book)
-#         return db_book
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"An error occurred while creating the book: {str(e)}")
-
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from jose import jwt, JWTError
 from app.models.books_model import Book
-from app.core.security import oauth2_scheme, verify_token
- 
+from app.core.security import verify_token
 
-def create_book(book, db: Session, token: str = Depends(oauth2_scheme)):
+
+def create_book(book, db: Session, token: str):
+    username = verify_token(token)
     try:
-        username = verify_token(token)  
         db_book = Book(**book.dict())
         db.add(db_book)
         db.commit()
         db.refresh(db_book)
         return db_book
     except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"An error occurred while creating the book: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error creating book: {str(e)}")
 
 
-
-
-def get_books(db: Session, token: str = Depends(oauth2_scheme)):
+def get_books(db: Session, token: str):
+    username = verify_token(token)
     try:
-        username = verify_token(token)
         return db.query(Book).filter(Book.is_deleted == False).all()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-def get_book(book_id: int, db: Session, token: str = Depends(oauth2_scheme)):
+def get_book(book_id: int, db: Session, token: str):
+    username = verify_token(token)
     try:
-        username = verify_token(token)
         db_book = db.query(Book).filter(Book.id == book_id, Book.is_deleted == False).first()
         if not db_book:
-            raise HTTPException(status_code=404, detail="ID not found")
+            raise HTTPException(status_code=404, detail="Book not found")
         return db_book
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Server Error.")
+        raise HTTPException(status_code=500, detail="Error fetching book")
 
 
-def update_book(book_id: int, book, db: Session, token: str = Depends(oauth2_scheme)):
+def update_book(book_id: int, book, db: Session, token: str):
+    username = verify_token(token)
     try:
-        username = verify_token(token)
         db_book = db.query(Book).filter(Book.id == book_id).first()
-        if not db_book:
-            raise HTTPException(status_code=404, detail="ID not found")
+        if not db_book or db_book.is_deleted:
+            raise HTTPException(status_code=404, detail="Book not found")
         for key, value in book.dict().items():
             setattr(db_book, key, value)
         db.commit()
         db.refresh(db_book)
         return db_book
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Server Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating book: {str(e)}")
 
 
-def delete_book(book_id: int, db: Session, token: str = Depends(oauth2_scheme)):
+def delete_book(book_id: int, db: Session, token: str):
+    username = verify_token(token)
     try:
-        username = verify_token(token)
         db_book = db.query(Book).filter(Book.id == book_id).first()
-        if not db_book:
-            raise HTTPException(status_code=404, detail="ID not found")
+        if not db_book or db_book.is_deleted:
+            raise HTTPException(status_code=404, detail="Book not found")
         db_book.is_deleted = True
         db.commit()
-        return {"message": "Book successfully deleted."}
+        return {"message": "Book soft-deleted successfully"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail="Server Error.")
+        raise HTTPException(status_code=500, detail="Error deleting book")
