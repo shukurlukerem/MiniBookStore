@@ -42,7 +42,7 @@ def get_books(db: Session, token: str = Depends(oauth2_scheme)):
         username = verify_token(token)
         return db.query(Book).filter(Book.is_deleted == False).all()
     except Exception as e:
-        raise HTTPException(status_code=500, detail="An error occurred while purchasing the book.")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 def get_book(book_id: int, db: Session, token: str = Depends(oauth2_scheme)):

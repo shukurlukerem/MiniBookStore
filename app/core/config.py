@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Settings(BaseSettings):
-    db_url: str  # must be lowercase if using .env with `DATABASE_URL`
+    db_url: str  
     secret_key: str
 
     class Config:
