@@ -1,13 +1,12 @@
-📚 FastAPI Bookstore & Orders API
+FastAPI Bookstore & Orders API
 
----
 
 Features
 
-* User registration and login with JWT authentication
-* CRUD operations on books (including soft delete)
-* Creating and listing user orders
-* Secure password hashing with Passlib
+User registration and login with JWT authentication
+CRUD operations on books (including soft delete)
+Creating and listing user orders
+Secure password hashing with Passlib
 
 
 API Endpoints
