@@ -14,5 +14,7 @@ def make_order(order: OrderCreate, db: Session = Depends(get_db), token: str = D
     return create_order(book_id=order.book_id, db=db, token=token)
 
 @router.get("/order-list")
-def list_orders(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
-    return get_orders(db=db, token=token)
+async def list_orders(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+    orders = await get_orders(db=db, token=token)
+    return orders
+

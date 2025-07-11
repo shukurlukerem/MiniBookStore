@@ -1,6 +1,10 @@
 from fastapi import FastAPI
 from app.api.v1.routes import auth_routes, book_routes, orders_routes
 from app.core.config import Base, engine
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+import aioredis
+
 
 Base.metadata.create_all(bind=engine)
 
@@ -13,4 +17,9 @@ app.include_router(orders_routes.router, prefix="/orders", tags=["Orders"])
 
 @app.get("/test")
 def test():
-    return {"message": "Mini Bookstore API is running!"}
+    return {"message": "OK"}
+
+@app.on_event("startup")
+async def startup():
+    redis = await aioredis.from_url("redis://localhost:6379")
+    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")

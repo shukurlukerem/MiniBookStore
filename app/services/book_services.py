@@ -2,6 +2,8 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from app.models.books_model import Book
 from app.core.security import verify_token
+from fastapi_cache.decorator import cache
+import asyncio
 
 
 def create_book(book, db: Session, token: str):
@@ -15,13 +17,14 @@ def create_book(book, db: Session, token: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating book: {str(e)}")
 
-
-def get_books(db: Session, token: str):
-    username = verify_token(token)
+@cache(expire=60)
+async def get_books_cached(db: Session, token: str):
     try:
-        return db.query(Book).filter(Book.is_deleted == False).all()
+        username = verify_token(token)
+        books = await asyncio.to_thread(lambda: db.query(Book).filter(Book.is_deleted == False).all())
+        return books
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Server Error: {str(e)}")
 
 
 def get_book(book_id: int, db: Session, token: str):

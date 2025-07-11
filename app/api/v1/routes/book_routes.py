@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.api.v1.schema.book_schema import BookCreate
 from app.services.book_services import (
     create_book,
-    get_books,
+    get_books_cached,
     get_book,
     update_book,
     delete_book
@@ -15,8 +15,10 @@ router = APIRouter()
 
 
 @router.get("/get-all-books")
-def route_get_books(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
-    return get_books(db, token)
+async def route_get_books(db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)):
+    books = await get_books_cached(db, token)
+    return books
+
 
 
 @router.post("/add-new-book")

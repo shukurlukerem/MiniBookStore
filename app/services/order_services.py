@@ -3,6 +3,8 @@ from fastapi import HTTPException, Depends
 from app.models.orders_model import Order
 from app.models.books_model import Book
 from app.core.security import verify_token
+from fastapi_cache.decorator import cache
+import asyncio
 
 def create_order(book_id: int, db: Session, token: str):
     try:
@@ -24,12 +26,12 @@ def create_order(book_id: int, db: Session, token: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Server Error: {str(e)}")
 
-
-def get_orders(db: Session, token: str):
+@cache(expire=60)
+async def get_orders(db: Session, token: str):
     try:
         username = verify_token(token)
-        user_id = get_user_id_by_username(db, username)  
-        orders = db.query(Order).filter(Order.user_id == user_id).all()
+        user_id = get_user_id_by_username(db, username)
+        orders = await asyncio.to_thread(lambda: db.query(Order).filter(Order.user_id == user_id).all())
         return orders
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Server Error: {str(e)}")
