@@ -4,7 +4,7 @@ from app.core.config import Base, engine
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 import aioredis
-
+from app.core.rate_limiter import init_rate_limiter
 
 Base.metadata.create_all(bind=engine)
 
@@ -23,3 +23,8 @@ def test():
 async def startup():
     redis = await aioredis.from_url("redis://localhost:6379")
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+
+
+@app.on_event("startup")
+async def startup():
+    await init_rate_limiter()
